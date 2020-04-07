@@ -18,9 +18,9 @@ def upload_to_s3(local_path, s3_data_location, *, search=None):
             idx = len(local_path)
             for name in tqdm(files, desc=f"Uploading folder '{root}'"):
                 file_path = os.path.join(root, name)
-                s3_path = os.path.join(s3_data_location, root[idx:], name)
+                s3_path = os.path.join(s3_data_location, root[idx:])
                 s3up.upload(file_path, s3_path)
-                
+
 
 def create_presigned_url(bucket_name, object_name, expiration=3600):
     
