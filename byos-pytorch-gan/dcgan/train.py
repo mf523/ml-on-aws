@@ -263,6 +263,15 @@ def get_datasets(dataset_name, *, dataroot='/opt/ml/input/data', image_size, cla
                                ]))
         nc=1
     
+    elif dataset_name == 'fashion-mnist':
+        dataset = dset.FashionMNIST(root=dataroot,
+                               transform=transforms.Compose([
+                                   transforms.Resize(image_size),
+                                   transforms.ToTensor(),
+                                   transforms.Normalize((0.5,), (0.5,)),
+                               ]))
+        nc=1
+    
     elif dataset_name == 'fake':
         dataset = dset.FakeData(image_size=(3, image_size, image_size),
                                 transform=transforms.ToTensor())
