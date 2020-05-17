@@ -1,0 +1,99 @@
+FROM ubuntu:18.04
+
+# Set a docker label to advertise multi-model support on the container
+LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
+# Set a docker label to enable container to use SAGEMAKER_BIND_TO_PORT environment variable if present
+LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
+
+
+ARG PYTHON_VERSION=3.7
+ARG PYTORCH_VERSION=1.5
+ARG TORCHVISION_VERSION=0.6
+
+
+ENV PYTHONUNBUFFERED TRUE
+ENV LD_LIBRARY_PATH /opt/conda/lib/:$LD_LIBRARY_PATH
+ENV PATH /opt/conda/bin:$PATH
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+    fakeroot \
+    ca-certificates \
+    dpkg-dev \
+    g++ \
+#    python3-dev \
+    openjdk-11-jdk \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+#    && cd /tmp \
+#    && curl -O https://bootstrap.pypa.io/get-pip.py \
+#    && python3 get-pip.py
+
+
+RUN curl -o ~/miniconda.sh -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+ && chmod +x ~/miniconda.sh \
+ && ~/miniconda.sh -b -p /opt/conda \
+ && rm -f ~/miniconda.sh \
+ && /opt/conda/bin/conda update conda \
+ && /opt/conda/bin/conda install -y \
+    python=$PYTHON_VERSION \
+    mkl-include \
+    mkl \
+    numpy \
+    scipy \
+    typing \
+ && /opt/conda/bin/conda clean -ya
+ 
+RUN conda install -y -c \
+    conda-forge \
+    awscli \
+    opencv \
+ && conda install -y \
+    scikit-learn \
+    pandas \
+    pillow \
+    h5py \
+    requests \
+ && conda install -y \
+    pytorch==$PYTORCH_VERSION \
+    torchvision==$TORCHVISION_VERSION cpuonly -c pytorch \
+ && conda clean -ya \
+ && pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org \
+ && ln -s /opt/conda/bin/pip /usr/local/bin/pip3
+
+#RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+#RUN update-alternatives --install /usr/local/bin/pip pip /usr/local/bin/pip3 1
+
+RUN pip install --no-cache-dir psutil
+RUN pip install --no-cache-dir torchtext
+
+                
+#RUN mkdir -p /tmp; \
+#   git clone https://github.com/pytorch/serve.git /tmp/torchserve.git; \
+#   pip install /tmp/torchserve.git; \
+#   rm -rf /tmp/torchserve.git
+
+RUN pip install torchserve
+
+
+RUN useradd -m model-server \
+    && mkdir -p /home/model-server/tmp
+
+COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
+RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh \
+    && chown -R model-server /home/model-server
+
+COPY config.properties.sm /home/model-server/config.properties
+COPY log4j.properties /home/model-server/log4j.properties
+
+RUN mkdir /home/model-server/model-store && chown -R model-server /home/model-server/model-store
+
+EXPOSE 8080 8081
+
+USER model-server
+WORKDIR /home/model-server
+ENV TEMP=/home/model-server/tmp
+ENV PATH="/usr/local/bin:${PATH}"
+ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh"]
+CMD ["serve"]
