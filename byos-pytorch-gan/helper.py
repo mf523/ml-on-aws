@@ -56,35 +56,25 @@ def get_object_path_by_filename(s3_location, filename):
     return None
 
 
-def load_model(model_cls, params, path, *, filename=None, device=None):
+def load_model(path, *, model_cls=None, params=None, filename=None, device=None):
 
     import os
     import torch
-    from dcgan.model import Generator
-
-    model = model_cls(**params)
-
+    
+    model_pt_path = path
     if not filename is None:
-        path = os.path.join(path, filename)
+        model_pt_path = os.path.join(path, filename)
+        
+    if device is None:
+        device = 'cpu'
+        
+    if not model_cls is None:
+        model = model_cls(**params)
+        model.load_state_dict(torch.load(model_pt_path, map_location=torch.device(device)))
+    else:
+        model = torch.jit.load(model_pt_path, map_location=torch.device(device))
 
-    with open(path, 'rb') as f:
-        model.load(path)
-    return model.to(device)
-
-
-def generate_fake_handwriting(model, *, batch_size, nz, device=None):
-
-    import torch
-    import torchvision.utils as vutils
-    from io import BytesIO
-    from PIL import Image
+    model.to(device)
     
+    return model
 
-    z = torch.randn(batch_size, nz, 1, 1, device=device)
-    fake = model(z)
-
-    imgio = BytesIO()
-    vutils.save_image(fake.detach(), imgio, normalize=True, format="PNG")
-    img = Image.open(imgio)
-    
-    return img
