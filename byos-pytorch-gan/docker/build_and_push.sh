@@ -37,10 +37,10 @@ region=${region:-us-west-2}
 
 if [ ${region} == "cn-north-1" ]; then
     # ecr.cn-north-1.amazonaws.com.cn
-    fullname="${account}.dkr.ecr.${region}.amazonaws.com/${image}:latest"
+    fullname="${account}.dkr.ecr.${region}.amazonaws.com.cn/${image}:latest"
 elif [ ${region} == "cn-northwest-1" ]; then
     # ecr.cn-northwest-1.amazonaws.com.cn
-    fullname="${account}.dkr.ecr.${region}.amazonaws.com/${image}:latest"
+    fullname="${account}.dkr.ecr.${region}.amazonaws.com.cn/${image}:latest"
 else
     fullname="${account}.dkr.ecr.${region}.amazonaws.com/${image}:latest"
 fi
