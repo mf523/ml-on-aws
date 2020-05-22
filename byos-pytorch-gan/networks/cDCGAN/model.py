@@ -168,9 +168,6 @@ class GANModel(object):
     num_classes = None
     real_cpu = None
     
-    real = None
-    fake = None
-    
     def __init__(self, *, batch_size, nz, nc, ngf, ndf, num_classes, device, weights_init,
                     learning_rate, betas):
 
@@ -191,9 +188,6 @@ class GANModel(object):
                 torch.randint(0, self.num_classes, (batch_size,))).to(self.device)
 
         self.criterion = nn.BCELoss()
-        
-        self.real = torch.ones(batch_size).to(self.device)
-        self.fake = torch.zeros(batch_size).to(self.device)
 
         self.netG = Generator(nz=nz, nc=nc, ngf=ngf, num_classes=self.num_classes).to(self.device)
         # print(netG)
@@ -230,15 +224,17 @@ class GANModel(object):
         ###########################
         # train with real
         self.netD.zero_grad()
+        real_label = torch.ones(batch_size).to(self.device)
         output = self.netD(real_images, real_labels).view(-1)
-        errD_real = self.criterion(output, self.real)
+        errD_real = self.criterion(output, real_label)
         errD_real.backward()
         D_x = output.mean().item()
 
 
         # train with fake
+        fake_label = torch.zeros(batch_size).to(self.device)
         output = self.netD(fake_images.detach(), fake_labels).view(-1)
-        errD_fake = self.criterion(output, self.fake)
+        errD_fake = self.criterion(output, fake_label)
         errD_fake.backward()
         D_G_z1 = output.mean().item()
         errD = errD_real + errD_fake
@@ -250,8 +246,9 @@ class GANModel(object):
         ###########################
         self.netG.zero_grad()
         # fake labels are real for generator cost
+        real_label = torch.ones(batch_size).to(self.device)
         output = self.netD(fake_images, fake_labels).view(-1)
-        errG = self.criterion(output, self.real)
+        errG = self.criterion(output, real_label)
         errG.backward()
         D_G_z2 = output.mean().item()
         self.optimizerG.step()
