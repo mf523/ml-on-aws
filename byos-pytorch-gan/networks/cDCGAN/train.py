@@ -24,7 +24,7 @@ import torchvision.utils as vutils
 
 from model import Generator
 from model import Discriminator
-from model import DCGAN
+from model import GANModel
 
 
 logger = logging.getLogger(__name__)
@@ -49,18 +49,18 @@ def log_batch(epoch, epochs, batch, batches, errD, errG, D_x, D_G_z1, D_G_z2, *,
                     f"Loss_D: {errD:.4}, Loss_G: {errG:.4}, D(x): {D_x:.4}, D(G(z)): {D_G_z1:.4}/{D_G_z2:.4}")
 
 
-def sample_batch(dcgan, epoch, batch, *, sample_interval=100, output_dir):
+def sample_batch(gan_model, epoch, batch, *, sample_interval=100, output_dir):
     import matplotlib.pyplot as plt
 
     if batch % sample_interval == 0:
-        vutils.save_image(dcgan.real_cpu, f'{output_dir}/real_e{epoch:03}_b{batch:04}.png', normalize=True)
-        fake = dcgan.netG(dcgan.fixed_noise)
+        vutils.save_image(gan_model.real_cpu, f'{output_dir}/real_e{epoch:03}_b{batch:04}.png', normalize=True)
+        fake = gan_model.netG(gan_model.fixed_noise, gan_model.fixed_labels)
         vutils.save_image(fake.detach(), f'{output_dir}/fake_e{epoch:03}_b{batch:04}.png', normalize=True)
 
 
-def checkpoint_epoch(dcgan, epoch, output_dir):
-    torch.save(dcgan.netG.state_dict(), f'{output_dir}/netG_e{epoch:03}.pth')
-    torch.save(dcgan.netD.state_dict(), f'{output_dir}/netD_e{epoch:03}.pth')
+def checkpoint_epoch(gan_model, epoch, output_dir):
+    torch.save(gan_model.netG.state_dict(), f'{output_dir}/netG_e{epoch:03}.pth')
+    torch.save(gan_model.netD.state_dict(), f'{output_dir}/netD_e{epoch:03}.pth')
 
 
 def smooth(y, box_pts):
@@ -119,32 +119,32 @@ def train(dataloader, hps, batch_size, test_batch_size, epochs, learning_rate,
           device, hosts, backend, current_host, model_dir, output_dir, seed,
           log_interval, sample_interval,
           beta1, nz, nc, ngf, ndf):
-        
-    dcgan = DCGAN(batch_size=batch_size, nz=nz, nc=nc, ngf=ngf, ndf=ndf,
+    
+    gan_model = GANModel(batch_size=batch_size, nz=nz, nc=nc, ngf=ngf, ndf=ndf, num_classes=10,
                     device=device, weights_init=weights_init, learning_rate=learning_rate,
-                    betas=(beta1, 0.999), real_label=1, fake_label=0)
+                    betas=(beta1, 0.999))
 
     track_d_loss = []
     track_g_loss = []
 
     for epoch in range(epochs):
-        batches = len(dataloader)
-        for batch, data in enumerate(dataloader, 0):
-            errG, errD, D_x, D_G_z1, D_G_z2 = dcgan.train_step(data,
-                          epoch=epoch, epochs=epochs, batch=batch, batches=batches)
+        num_batches = len(dataloader)
+        for idx_batch, (images, labels) in enumerate(dataloader, 0):
+            errG, errD, D_x, D_G_z1, D_G_z2 = gan_model.train_step(images, labels,
+                          epoch=epoch, epochs=epochs)
 
             track_g_loss.append(errG)
             track_d_loss.append(errD)
                 
-            log_batch(epoch, epochs, batch, batches, errD, errG,
+            log_batch(epoch, epochs, idx_batch, num_batches, errD, errG,
                             D_x, D_G_z1, D_G_z2, log_interval=log_interval, output_dir=output_dir)
-            sample_batch(dcgan, epoch, batch, output_dir=output_dir,
+            sample_batch(gan_model, epoch, idx_batch, output_dir=output_dir,
                                 sample_interval=sample_interval)
 
         # do checkpointing
-        checkpoint_epoch(dcgan, epoch, output_dir)
+        checkpoint_epoch(gan_model, epoch, output_dir)
         
-    save_model(model_dir, dcgan.netG)
+    save_model(model_dir, gan_model.netG)
     save_track_loss(track_d_loss, track_d_loss, output_dir=output_dir)
 
     return
@@ -236,6 +236,7 @@ def get_datasets(dataset_name, *, dataroot='/opt/ml/input/data', image_size, cla
                                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                             ]))
         nc=3
+
     elif dataset_name == 'cifar10':
         dataset = dset.CIFAR10(root=dataroot,
                                transform=transforms.Compose([

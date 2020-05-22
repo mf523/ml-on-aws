@@ -165,7 +165,7 @@ class DCGAN(object):
         self.optimizerD = optim.Adam(self.netD.parameters(), lr=learning_rate, betas=betas)
 
 
-    def train_step(self, data, *, epoch, epochs, batch, batches):
+    def train_step(self, data, *, epoch, epochs):
         import torch
 
         ############################
