@@ -51,10 +51,10 @@ def model_fn(model_dir):
         # Client-framework is CPU only. But model will run in Elastic Inference server with CUDA.
         return torch.jit.load(model_path, map_location=torch.device('cpu'))
     else:
-        from handler import PganFaceGenerator
+        from handler import Handler
         
         ctxt = context(model_dir, 'code/model.py')
-        hdlr = PganFaceGenerator()
+        hdlr = Handler()
         hdlr.initialize(context=ctxt)
             
         return hdlr.model
@@ -62,11 +62,10 @@ def model_fn(model_dir):
 
 def input_fn(input_data, content_type):
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         np_array = decoder.decode(input_data, content_type)
         tensor = torch.FloatTensor(
             np_array) if content_type in content_types.UTF8_TYPES else torch.from_numpy(np_array).float()
-        return tensor.to(device)
+        return tensor
     
     
 def predict_fn(data, model):
@@ -80,9 +79,9 @@ def predict_fn(data, model):
             with torch.jit.optimized_execution(True, {"target_device": "eia:0"}):
                 output = model(input_data)
         else:
-            from handler import PganFaceGenerator
+            from handler import Handler
 
-            hdlr = PganFaceGenerator()
+            hdlr = Handler()
                 
             if not hdlr.initialized:
                 hdlr.initialize(model=model)

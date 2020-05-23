@@ -10,7 +10,7 @@ from torchvision import transforms
 logger = logging.getLogger(__name__)
 
 
-class PganFaceGenerator(object):
+class Handler(object):
     """
     FaceGenerator handler class. This handler takes list of noises
     and returns a corresponding list of images
@@ -33,8 +33,11 @@ class PganFaceGenerator(object):
         else:
             self.manifest = context.manifest
             properties = context.system_properties
+            gpu_id = properties.get("gpu_id")
+            if gpu_id is None:
+                gpu_id = 0
             model_dir = properties.get("model_dir")
-            self.device = torch.device("cuda:" + str(properties.get("gpu_id")) if torch.cuda.is_available() else "cpu")
+            self.device = torch.device("cuda:" + str(gpu_id) if torch.cuda.is_available() else "cpu")
 
             # Read model serialize/pt file
             serialized_file = self.manifest['model']['serializedFile']
@@ -86,6 +89,8 @@ class PganFaceGenerator(object):
     def inference(self, noises, labels):
         import torch
         
+        noises.to(self.device)
+        labels.to(self.device)
         with torch.no_grad():
             generated_images = self.model.forward(noises, labels)
 
@@ -104,7 +109,7 @@ class PganFaceGenerator(object):
         return output_classes
 
 
-_service = PganFaceGenerator()
+_service = Handler()
 
 
 def handle(data, context):
