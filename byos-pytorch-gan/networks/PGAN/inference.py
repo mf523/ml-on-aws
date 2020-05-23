@@ -53,7 +53,7 @@ def model_fn(model_dir):
     else:
         from handler import PganFaceGenerator
         
-        ctxt = context(model_dir, 'code/progressive_gan/networks/progressive_conv_net.py')
+        ctxt = context(model_dir, 'code/model.py')
         hdlr = PganFaceGenerator()
         hdlr.initialize(context=ctxt)
             
