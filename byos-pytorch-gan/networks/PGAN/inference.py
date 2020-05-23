@@ -104,11 +104,3 @@ def output_fn(prediction, accept):
 
     return encoded_prediction
 
-
-class DefaultPytorchInferenceHandler(default_inference_handler.DefaultInferenceHandler):
-    VALID_CONTENT_TYPES = (content_types.JSON, content_types.NPY)
-    
-    def __init__(self):
-        super(default_inference_handler.DefaultInferenceHandler, self).__init__()
-
-

@@ -83,11 +83,11 @@ class PganFaceGenerator(object):
 
         return noises
 
-    def inference(self, x):
+    def inference(self, noises, labels):
         import torch
         
         with torch.no_grad():
-            generated_images = self.model.forward(x)
+            generated_images = self.model.forward(noises, labels)
 
         return generated_images
 

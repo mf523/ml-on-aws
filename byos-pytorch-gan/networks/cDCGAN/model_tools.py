@@ -6,6 +6,15 @@ def generate_noises(num_images=1, dim=512):
     
     return noises
 
+
+def generate_labels(num_images=1):
+    import torch
+
+    labels = torch.LongTensor(torch.randint(0, 10, (num_images,)))
+    
+    return labels
+
+
 # plot images using torchvision and matplotlib
 def show_multiple_pictures(pics):
     import matplotlib.pyplot as plt
@@ -30,7 +39,7 @@ def generate_fake_handwriting(model, *, batch_size, nz, device=None):
 
     z = torch.randn(batch_size, nz, 1, 1, device=device)
     labels = torch.LongTensor(
-                torch.randint(0, 10, (batch_size,), device=device))
+                torch.randint(0, 10, (batch_size,))).to(device)
     fake = model(z, labels)
 
     imgio = BytesIO()

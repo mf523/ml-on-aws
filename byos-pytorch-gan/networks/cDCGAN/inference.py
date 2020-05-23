@@ -61,9 +61,10 @@ def model_fn(model_dir):
 
 
 def input_fn(input_data, content_type):
-
+        from serde import deserialize
+        
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        np_array = decoder.decode(input_data, content_type)
+        np_array = deserialize(input_data, content_type)
         tensor = torch.FloatTensor(
             np_array) if content_type in content_types.UTF8_TYPES else torch.from_numpy(np_array).float()
         return tensor.to(device)
@@ -96,19 +97,12 @@ def predict_fn(data, model):
 
 
 def output_fn(prediction, accept):
+    from serde import serialize
+    
     if type(prediction) == torch.Tensor:
         prediction = prediction.detach().cpu().numpy().tolist()
-    encoded_prediction = encoder.encode(prediction, accept)
+    encoded_prediction = serialize(prediction, accept)
     if accept == content_types.CSV:
         encoded_prediction = encoded_prediction.encode("utf-8")
 
     return encoded_prediction
-
-
-class DefaultPytorchInferenceHandler(default_inference_handler.DefaultInferenceHandler):
-    VALID_CONTENT_TYPES = (content_types.JSON, content_types.NPY)
-    
-    def __init__(self):
-        super(default_inference_handler.DefaultInferenceHandler, self).__init__()
-
-
