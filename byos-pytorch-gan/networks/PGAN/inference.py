@@ -19,7 +19,7 @@ import torch
 from sagemaker_inference import content_types, decoder, default_inference_handler, encoder
 
 INFERENCE_ACCELERATOR_PRESENT_ENV = "SAGEMAKER_INFERENCE_ACCELERATOR_PRESENT"
-DEFAULT_MODEL_FILENAME = "model.pt"
+DEFAULT_MODEL_FILENAME = "model.pth"
 DEFAULT_MODEL_DEFINITION = "code/model.py"
 
 
