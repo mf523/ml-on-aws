@@ -152,7 +152,7 @@ def train(dataloader, hps, batch_size, test_batch_size, epochs, learning_rate,
 
 def save_model(model_dir, model):
     logger.info("Saving the model.")
-    model.save(model_dir, filename="generator_state.pth")
+    model.save(model_dir, filename="model.pt")
 
     
 def load_model(model_dir, device=None):
@@ -160,9 +160,9 @@ def load_model(model_dir, device=None):
     if device is None:
         device = get_training_device_name(1)
 
-    netG.load(model_dir, filename="generator_state.pth", device=device)
+    model.load(model_dir, filename="model.pt", device=device)
 
-    return netG
+    return model
 
 
 def parse_args():

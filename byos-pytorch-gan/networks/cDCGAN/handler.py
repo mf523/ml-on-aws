@@ -25,11 +25,14 @@ class Handler(object):
     def initialize(self, *, context=None, model=None):
         """First try to load torchscript else load eager mode state_dict based model"""
         import os
+        import json
 
         if context is None:
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            logger.info('Available device {}'.format(self.device))
             if model is None:
                 raise RuntimeError(f"Missing context and model")
-            self.model = model
+            self.model = model.to(self.device)
         else:
             self.manifest = context.manifest
             properties = context.system_properties
@@ -37,11 +40,23 @@ class Handler(object):
             if gpu_id is None:
                 gpu_id = 0
             model_dir = properties.get("model_dir")
+            
+            from os import listdir
+            from os.path import isfile, join
+            entries = [f for f in listdir(model_dir) if join(model_dir, f)]
+
             self.device = torch.device("cuda:" + str(gpu_id) if torch.cuda.is_available() else "cpu")
+            logger.info('Available device {}'.format(self.device))
 
             # Read model serialize/pt file
             serialized_file = self.manifest['model']['serializedFile']
             model_pt_path = os.path.join(model_dir, serialized_file)
+            json_manifest = json.dumps(self.manifest)
+            json_properties = json.dumps(properties)
+            json_entries = json.dumps(entries)
+            logger.info(f'{json_manifest}')
+            logger.info(f'{json_properties}')
+            logger.info(f'{json_entries}')
             if not os.path.isfile(model_pt_path):
                 raise RuntimeError(f"Missing the serialized model file '{model_pt_path}'")
 
@@ -55,58 +70,63 @@ class Handler(object):
                 if not os.path.isfile(model_def_path):
                     raise RuntimeError(f"Missing the model.py file '{model_def_path}'")
 
-                from progressive_gan.networks.progressive_conv_net import GNet
-                from model_tools import create_gnet_512_512
+                from model_tools import load_model
+                from model import Generator
+                import json
 
-                self.model = create_gnet_512_512(GNet, model_pt_path, device=self.device)
+                with open(os.path.join(model_dir, 'code', 'hps.json')) as fp:
+                    hps = json.load(fp)
+                    fp.close()
+
+                params = {'nz': hps['nz'], 'nc': hps['nc'], 'ngf': hps['ngf'], 'num_classes': hps['num-classes']}
+
+                self.model = load_model(model_pt_path, model_cls=Generator, params=params, device=self.device)
 
             self.model.eval()
             logger.debug('Model file {0} loaded successfully'.format(model_pt_path))
 
         self.initialized = True
 
-    def preprocess(self, request):
-
-        import json
-        from io import BytesIO
+    def preprocess(self, request, content_type='application/python-pickle'):
         import torch
+        from serde import deserialize
 
-        noises = []
-        for idx, data in enumerate(request):
-            raw_data = data.get("data")
-            if raw_data is None:
-                raw_data = data.get("body")
-
-            stream = BytesIO(raw_data)
-
-            np_output = np.load(stream, allow_pickle=True)
-            break
+        data = deserialize(request, content_type)
         
-        noises = torch.Tensor(np_output).float()
+        noises = data['noises']
+        labels = data['labels']
 
-        return noises
+        noises = torch.Tensor(noises)
+
+        return noises.view(noises.size(0), noises.size(1), 1, 1), torch.LongTensor(labels)
 
     def inference(self, noises, labels):
         import torch
         
-        noises.to(self.device)
-        labels.to(self.device)
+        noises = noises.to(self.device)
+        labels = labels.to(self.device)
+
         with torch.no_grad():
             generated_images = self.model.forward(noises, labels)
 
-        return generated_images
+        return generated_images.to('cpu')
 
-    def postprocess(self, inference_output):
-        num_img, c, h, w = inference_output.shape
+    def postprocess(self, inference_output, accept='application/python-pickle'):
+        import torch
+        from serde import serialize
+
         detached_inference_output = inference_output.detach()
-        output_classes = []
-#         for i in range(num_img):
-#             out = inference_output[i].numpy().tobytes()
-#             _, y_hat = out.max(1)
-#             predicted_idx = str(y_hat.item())
-        output_classes.append(detached_inference_output.numpy())
+
+        serialized_data = serialize(detached_inference_output.numpy(), accept)
+        
+        return serialized_data
     
-        return output_classes
+    def _process(self, request):
+        noises, labels = self.preprocess(request)
+        data = self.inference(noises, labels)
+        data = self.postprocess(data)
+        
+        return data
 
 
 _service = Handler()
@@ -119,8 +139,6 @@ def handle(data, context):
     if data is None:
         return None
 
-    data = _service.preprocess(data)
-    data = _service.inference(data)
-    data = _service.postprocess(data)
+    data = _service._process(data)
 
     return data

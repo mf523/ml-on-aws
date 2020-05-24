@@ -16,14 +16,14 @@ def generate_labels(num_images=1):
 
 
 # plot images using torchvision and matplotlib
-def show_multiple_pictures(pics):
+def show_multiple_pictures(pics, nrow=10):
     import matplotlib.pyplot as plt
     import torchvision
     import torch
 
     generated_images = torch.Tensor(pics)
     grid = torchvision.utils.make_grid(generated_images.clamp(min=-1, max=1),
-                                       scale_each=True, normalize=True)
+                                       scale_each=True, normalize=True, nrow=nrow)
     plt.imshow(grid.permute(1, 2, 0).cpu().numpy())
     plt.show()
     
@@ -48,4 +48,26 @@ def generate_fake_handwriting(model, *, batch_size, nz, device=None):
     
     return img
 
+
+def load_model(path, *, model_cls=None, params=None, filename=None, device=None):
+
+    import os
+    import torch
+    
+    model_pt_path = path
+    if not filename is None:
+        model_pt_path = os.path.join(path, filename)
+        
+    if device is None:
+        device = 'cpu'
+        
+    if not model_cls is None:
+        model = model_cls(**params)
+        model.load_state_dict(torch.load(model_pt_path, map_location=torch.device(device)))
+    else:
+        model = torch.jit.load(model_pt_path, map_location=torch.device(device))
+
+    model.to(device)
+    
+    return model
 

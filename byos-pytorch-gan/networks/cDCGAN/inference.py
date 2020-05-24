@@ -61,47 +61,44 @@ def model_fn(model_dir):
 
 
 def input_fn(input_data, content_type):
-        from serde import deserialize
-        
-        np_array = deserialize(input_data, content_type)
-        tensor = torch.FloatTensor(
-            np_array) if content_type in content_types.UTF8_TYPES else torch.from_numpy(np_array).float()
-        return tensor
+        from handler import Handler
+
+        hdlr = Handler()
+        noises, labels = hdlr.preprocess(input_data, content_type)
+
+        return {'noises': noises, 'labels': labels}
     
     
 def predict_fn(data, model):
 
-    with torch.no_grad():
-        if os.getenv(INFERENCE_ACCELERATOR_PRESENT_ENV) == "true":
+    if os.getenv(INFERENCE_ACCELERATOR_PRESENT_ENV) == "true":
+        with torch.no_grad():
             device = torch.device("cpu")
             model = model.to(device)
             input_data = data.to(device)
             model.eval()
             with torch.jit.optimized_execution(True, {"target_device": "eia:0"}):
                 output = model(input_data)
-        else:
-            from handler import Handler
+    else:
+        from handler import Handler
 
-            hdlr = Handler()
+        hdlr = Handler()
                 
-            if not hdlr.initialized:
-                hdlr.initialize(model=model)
+        if not hdlr.initialized:
+            hdlr.initialize(model=model)
 
-            if data is None:
-                return None
+        if data is None:
+            return None
 
-            output = hdlr.inference(data)
+        output = hdlr.inference(data['noises'], data['labels'])
 
     return output
 
 
 def output_fn(prediction, accept):
-    from serde import serialize
-    
-    if type(prediction) == torch.Tensor:
-        prediction = prediction.detach().cpu().numpy().tolist()
-    encoded_prediction = serialize(prediction, accept)
-    if accept == content_types.CSV:
-        encoded_prediction = encoded_prediction.encode("utf-8")
+    from handler import Handler
+
+    hdlr = Handler()
+    encoded_prediction = hdlr.postprocess(prediction, accept)
 
     return encoded_prediction
