@@ -203,6 +203,7 @@ def parse_args():
     parser.add_argument('--data-dir', required=False, default=None, help='path to data dir')
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
     parser.add_argument('--image-size', type=int, default=64, help='the height / width of the input image to network')
+    parser.add_argument('--nc', type=int, default=None)
     parser.add_argument('--nz', type=int, default=100, help='size of the latent z vector')
     parser.add_argument('--ngf', type=int, default=64)
     parser.add_argument('--ndf', type=int, default=64)
@@ -337,7 +338,8 @@ if __name__ == '__main__':
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size,
                     shuffle=True, num_workers=num_workers, pin_memory=pin_memory)
 
-#     nc = int(args.nc)
+    if not args.nc is None:
+        nc = int(args.nc)
     nz = int(args.nz)
     ngf = int(args.ngf)
     ndf = int(args.ndf)
