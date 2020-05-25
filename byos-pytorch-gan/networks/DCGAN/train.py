@@ -26,6 +26,7 @@ from model import Generator
 from model import Discriminator
 from model import DCGAN
 
+cudnn.benchmark = True
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -36,10 +37,10 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
-        m.weight.data.normal_(0.0, 0.02)
+        torch.nn.init.normal_(m.weight, 0.0, 0.02)
     elif classname.find('BatchNorm') != -1:
-        m.weight.data.normal_(1.0, 0.02)
-        m.bias.data.fill_(0)
+        torch.nn.init.normal_(m.weight, 1.0, 0.02)
+        torch.nn.init.zeros_(m.bias)
 
 
 def log_batch(epoch, epochs, batch, batches, errD, errG, D_x, D_G_z1, D_G_z2, *, log_interval=10, output_dir):
@@ -49,13 +50,18 @@ def log_batch(epoch, epochs, batch, batches, errD, errG, D_x, D_G_z1, D_G_z2, *,
                     f"Loss_D: {errD:.4}, Loss_G: {errG:.4}, D(x): {D_x:.4}, D(G(z)): {D_G_z1:.4}/{D_G_z2:.4}")
 
 
-def sample_batch(dcgan, epoch, batch, *, sample_interval=100, output_dir):
+def sample_batch(gan_model, epoch, batch, *, sample_size=64, sample_interval=100, output_dir):
     import matplotlib.pyplot as plt
 
     if batch % sample_interval == 0:
-        vutils.save_image(dcgan.real_cpu, f'{output_dir}/real_e{epoch:03}_b{batch:04}.png', normalize=True)
-        fake = dcgan.netG(dcgan.fixed_noise)
-        vutils.save_image(fake.detach(), f'{output_dir}/fake_e{epoch:03}_b{batch:04}.png', normalize=True)
+        batch_size = gan_model.real_cpu.size(0)
+        if batch_size < sample_size:
+            sample_size = batch_size
+        vutils.save_image(gan_model.real_cpu[:sample_size],
+                          f'{output_dir}/real_e{epoch:03}_b{batch:04}.png', normalize=True)
+        fake = gan_model.netG(gan_model.fixed_noise)
+        vutils.save_image(fake.detach()[:sample_size],
+                          f'{output_dir}/fake_e{epoch:03}_b{batch:04}.png', normalize=True)
 
 
 def checkpoint_epoch(dcgan, epoch, output_dir):
@@ -90,9 +96,9 @@ def save_track_loss(track_d_loss, track_g_loss, *, output_dir):
     axs[1].plot(track_g_loss, alpha=0.3, linewidth=5, c='C4')
     axs[1].plot(xs[w:-w], smooth(track_g_loss, w)[w:-w], c='C4')
     axs[1].set_title('Generator', fontsize=10)
-    axs[1].set_xlabel('Epoch')
+    axs[1].set_xlabel('Iteration')
     axs[1].set_ylabel('loss', fontsize=10)
-    plt.savefig(output_dir + f'/loss_trackinge.png')
+    plt.savefig(output_dir + f'/loss_tracking.png')
     plt.close()
 
 
@@ -132,14 +138,15 @@ def train(dataloader, hps, batch_size, test_batch_size, epochs, learning_rate,
         for batch, data in enumerate(dataloader, 0):
             errG, errD, D_x, D_G_z1, D_G_z2 = dcgan.train_step(data,
                           epoch=epoch, epochs=epochs)
-
+                
             track_g_loss.append(errG)
             track_d_loss.append(errD)
-                
+        
             log_batch(epoch, epochs, batch, batches, errD, errG,
                             D_x, D_G_z1, D_G_z2, log_interval=log_interval, output_dir=output_dir)
             sample_batch(dcgan, epoch, batch, output_dir=output_dir,
                                 sample_interval=sample_interval)
+
 
         # do checkpointing
         checkpoint_epoch(dcgan, epoch, output_dir)
