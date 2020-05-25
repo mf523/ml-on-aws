@@ -6,45 +6,38 @@ import os
 import torch.optim as optim
 
 class Generator(nn.Module):
-    def __init__(self, *, nz, nc, ngf):
+    def __init__(self, *, nz, nc, ngf, ngpu=1):
         super(Generator, self).__init__()
+        self.ngpu = ngpu
+        self.main = nn.Sequential(
+            # input is Z, going into a convolution
+            nn.ConvTranspose2d(     nz, ngf * 8, 4, 1, 0, bias=False),
+            nn.BatchNorm2d(ngf * 8),
+            nn.ReLU(True),
+            # state size. (ngf*8) x 4 x 4
+            nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 4),
+            nn.ReLU(True),
+            # state size. (ngf*4) x 8 x 8
+            nn.ConvTranspose2d(ngf * 4, ngf * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 2),
+            nn.ReLU(True),
+            # state size. (ngf*2) x 16 x 16
+            nn.ConvTranspose2d(ngf * 2,     ngf, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf),
+            nn.ReLU(True),
+            # state size. (ngf) x 32 x 32
+            nn.ConvTranspose2d(    ngf,      nc, 4, 2, 1, bias=False),
+            nn.Tanh()
+            # state size. (nc) x 64 x 64
+        )
 
-        # Input is the latent vector Z.
-        self.tconv1 = nn.ConvTranspose2d(nz, ngf*8,
-            kernel_size=4, stride=1, padding=0, bias=False)
-        self.bn1 = nn.BatchNorm2d(ngf*8)
-
-        # Input Dimension: (ngf*8) x 4 x 4
-        self.tconv2 = nn.ConvTranspose2d(ngf*8, ngf*4,
-            4, 2, 1, bias=False)
-        self.bn2 = nn.BatchNorm2d(ngf*4)
-
-        # Input Dimension: (ngf*4) x 8 x 8
-        self.tconv3 = nn.ConvTranspose2d(ngf*4, ngf*2,
-            4, 2, 1, bias=False)
-        self.bn3 = nn.BatchNorm2d(ngf*2)
-
-        # Input Dimension: (ngf*2) x 16 x 16
-        self.tconv4 = nn.ConvTranspose2d(ngf*2, ngf,
-            4, 2, 1, bias=False)
-        self.bn4 = nn.BatchNorm2d(ngf)
-
-        # Input Dimension: (ngf) * 32 * 32
-        self.tconv5 = nn.ConvTranspose2d(ngf, nc,
-            4, 2, 1, bias=False)
-        #Output Dimension: (nc) x 64 x 64
-
-
-    def forward(self, x):
-        x = F.relu(self.bn1(self.tconv1(x)))
-        x = F.relu(self.bn2(self.tconv2(x)))
-        x = F.relu(self.bn3(self.tconv3(x)))
-        x = F.relu(self.bn4(self.tconv4(x)))
-
-        x = torch.tanh(self.tconv5(x))
-
-        return x
-
+    def forward(self, input):
+        if input.is_cuda and self.ngpu > 1:
+            output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
+        else:
+            output = self.main(input)
+        return output
 
     def save(self, path, *, filename=None, device='cpu'):
         # recommended way from http://pytorch.org/docs/master/notes/serialization.html
@@ -52,7 +45,6 @@ class Generator(nn.Module):
         if not filename is None:
             path = os.path.join(path, filename)
         torch.save(self.state_dict(), path)
-
 
     def load(self, path, *, filename=None):
         if not filename is None:
@@ -62,42 +54,37 @@ class Generator(nn.Module):
 
     
 class Discriminator(nn.Module):
-    def __init__(self, *, nc, ndf):
+    def __init__(self, *, nc, ndf, ngpu=1):
         super(Discriminator, self).__init__()
+        self.ngpu = ngpu
+        self.main = nn.Sequential(
+            # input is (nc) x 64 x 64
+            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf) x 32 x 32
+            nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 2),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*2) x 16 x 16
+            nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 4),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*4) x 8 x 8
+            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 8),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*8) x 4 x 4
+            nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
+            nn.Sigmoid()
+        )
 
-        # Input Dimension: (nc) x 64 x 64
-        self.conv1 = nn.Conv2d(nc, ndf,
-            4, 2, 1, bias=False)
+    def forward(self, input):
+        if input.is_cuda and self.ngpu > 1:
+            output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
+        else:
+            output = self.main(input)
 
-        # Input Dimension: (ndf) x 32 x 32
-        self.conv2 = nn.Conv2d(ndf, ndf*2,
-            4, 2, 1, bias=False)
-        self.bn2 = nn.BatchNorm2d(ndf*2)
-
-        # Input Dimension: (ndf*2) x 16 x 16
-        self.conv3 = nn.Conv2d(ndf*2, ndf*4,
-            4, 2, 1, bias=False)
-        self.bn3 = nn.BatchNorm2d(ndf*4)
-
-        # Input Dimension: (ndf*4) x 8 x 8
-        self.conv4 = nn.Conv2d(ndf*4, ndf*8,
-            4, 2, 1, bias=False)
-        self.bn4 = nn.BatchNorm2d(ndf*8)
-
-        # Input Dimension: (ndf*8) x 4 x 4
-        self.conv5 = nn.Conv2d(ndf*8, 1, 4, 1, 0, bias=False)
-        
-
-    def forward(self, x):
-        x = F.leaky_relu(self.conv1(x), 0.2, True)
-        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.2, True)
-        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.2, True)
-        x = F.leaky_relu(self.bn4(self.conv4(x)), 0.2, True)
-
-        x = torch.sigmoid(self.conv5(x))
-
-        return x
-
+        return output.view(-1, 1).squeeze(1)
 
     def save(self, path, *, filename=None, device='cpu'):
         # recommended way from http://pytorch.org/docs/master/notes/serialization.html
@@ -169,21 +156,15 @@ class DCGAN(object):
         import torch
 
         ############################
-        # (1) Data sampling
-        ###########################
-        self.real_cpu = data[0]
-        real = data[0].to(self.device)
-        batch_size = real.size(0)
-        noise = torch.randn(batch_size, self.nz, 1, 1, device=self.device)
-        fake = self.netG(noise)
-        
-        
-        ############################
-        # (2) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
+        # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
         ###########################
         # train with real
         self.netD.zero_grad()
+        self.real_cpu = data[0]
+        real = data[0].to(self.device)
+        batch_size = real.size(0)
         label = torch.full((batch_size,), self.real_label, device=self.device)
+        
         output = self.netD(real).view(-1)
         errD_real = self.criterion(output, label)
         errD_real.backward()
@@ -191,6 +172,8 @@ class DCGAN(object):
 
 
         # train with fake
+        noise = torch.randn(batch_size, self.nz, 1, 1, device=self.device)
+        fake = self.netG(noise)
         label.fill_(self.fake_label)
         output = self.netD(fake.detach()).view(-1)
         errD_fake = self.criterion(output, label)
@@ -201,7 +184,7 @@ class DCGAN(object):
     
 
         ############################
-        # (3) Update G network: maximize log(D(G(z)))
+        # (2) Update G network: maximize log(D(G(z)))
         ###########################
         self.netG.zero_grad()
         label.fill_(self.real_label)  # fake labels are real for generator cost

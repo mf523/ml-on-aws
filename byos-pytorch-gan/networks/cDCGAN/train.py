@@ -58,7 +58,7 @@ def sample_batch(gan_model, epoch, batch, *, sample_size=64, sample_interval=100
             sample_size = batch_size
         vutils.save_image(gan_model.real_cpu[:sample_size],
                           f'{output_dir}/real_e{epoch:03}_b{batch:04}.png', normalize=True)
-        fake = gan_model.netG(gan_model.fixed_noise)
+        fake = gan_model.netG(gan_model.fixed_noise, gan_model.fixed_labels)
         vutils.save_image(fake.detach()[:sample_size],
                           f'{output_dir}/fake_e{epoch:03}_b{batch:04}.png', normalize=True)
 
