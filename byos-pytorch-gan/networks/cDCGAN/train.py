@@ -49,13 +49,18 @@ def log_batch(epoch, epochs, batch, batches, errD, errG, D_x, D_G_z1, D_G_z2, *,
                     f"Loss_D: {errD:.4}, Loss_G: {errG:.4}, D(x): {D_x:.4}, D(G(z)): {D_G_z1:.4}/{D_G_z2:.4}")
 
 
-def sample_batch(gan_model, epoch, batch, *, sample_interval=100, output_dir):
+def sample_batch(gan_model, epoch, batch, *, sample_size=64, sample_interval=100, output_dir):
     import matplotlib.pyplot as plt
 
     if batch % sample_interval == 0:
-        vutils.save_image(gan_model.real_cpu, f'{output_dir}/real_e{epoch:03}_b{batch:04}.png', normalize=True)
-        fake = gan_model.netG(gan_model.fixed_noise, gan_model.fixed_labels)
-        vutils.save_image(fake.detach(), f'{output_dir}/fake_e{epoch:03}_b{batch:04}.png', normalize=True)
+        batch_size = gan_model.real_cpu.size(0)
+        if batch_size < sample_size:
+            sample_size = batch_size
+        vutils.save_image(gan_model.real_cpu[:sample_size],
+                          f'{output_dir}/real_e{epoch:03}_b{batch:04}.png', normalize=True)
+        fake = gan_model.netG(gan_model.fixed_noise)
+        vutils.save_image(fake.detach()[:sample_size],
+                          f'{output_dir}/fake_e{epoch:03}_b{batch:04}.png', normalize=True)
 
 
 def checkpoint_epoch(gan_model, epoch, output_dir):
@@ -90,9 +95,9 @@ def save_track_loss(track_d_loss, track_g_loss, *, output_dir):
     axs[1].plot(track_g_loss, alpha=0.3, linewidth=5, c='C4')
     axs[1].plot(xs[w:-w], smooth(track_g_loss, w)[w:-w], c='C4')
     axs[1].set_title('Generator', fontsize=10)
-    axs[1].set_xlabel('Epoch')
+    axs[1].set_xlabel('Iteration')
     axs[1].set_ylabel('loss', fontsize=10)
-    plt.savefig(output_dir + f'/loss_trackinge.png')
+    plt.savefig(output_dir + f'/loss_tracking.png')
     plt.close()
 
 
@@ -127,22 +132,22 @@ def train(dataloader, hps, batch_size, test_batch_size, epochs, learning_rate,
     track_d_loss = []
     track_g_loss = []
 
-    for epoch in range(epochs):
+    for idx_epoch in range(epochs):
         num_batches = len(dataloader)
         for idx_batch, (images, labels) in enumerate(dataloader, 0):
             errG, errD, D_x, D_G_z1, D_G_z2 = gan_model.train_step(images, labels,
-                          epoch=epoch, epochs=epochs)
+                          epoch=idx_epoch, epochs=epochs)
 
             track_g_loss.append(errG)
             track_d_loss.append(errD)
                 
-            log_batch(epoch, epochs, idx_batch, num_batches, errD, errG,
+            log_batch(idx_epoch, epochs, idx_batch, num_batches, errD, errG,
                             D_x, D_G_z1, D_G_z2, log_interval=log_interval, output_dir=output_dir)
-            sample_batch(gan_model, epoch, idx_batch, output_dir=output_dir,
+            sample_batch(gan_model, idx_epoch, idx_batch, output_dir=output_dir,
                                 sample_interval=sample_interval)
 
         # do checkpointing
-        checkpoint_epoch(gan_model, epoch, output_dir)
+        checkpoint_epoch(gan_model, idx_epoch, output_dir)
         
     save_model(model_dir, gan_model.netG)
     save_track_loss(track_d_loss, track_d_loss, output_dir=output_dir)
