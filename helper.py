@@ -56,7 +56,7 @@ def get_object_path_by_filename(s3_location, filename):
     return None
 
 
-def load_model(path, *, model_cls=None, params=None, filename=None, device=None):
+def load_model(path, *, model_cls=None, params=None, filename=None, device=None, strict=True):
 
     import os
     import torch
@@ -70,7 +70,7 @@ def load_model(path, *, model_cls=None, params=None, filename=None, device=None)
         
     if not model_cls is None:
         model = model_cls(**params)
-        model.load_state_dict(torch.load(model_pt_path, map_location=torch.device(device)))
+        model.load_state_dict(torch.load(model_pt_path, map_location=torch.device(device)), strict=strict)
     else:
         model = torch.jit.load(model_pt_path, map_location=torch.device(device))
 
