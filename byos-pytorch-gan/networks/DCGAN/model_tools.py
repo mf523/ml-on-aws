@@ -1,6 +1,6 @@
 
 
-def generate_fake_handwriting(model, *, batch_size, nz, device=None):
+def generate_fake_handwriting(model, *, num_images, nz, device=None):
 
     import torch
     import torchvision.utils as vutils
@@ -8,7 +8,7 @@ def generate_fake_handwriting(model, *, batch_size, nz, device=None):
     from PIL import Image
     
 
-    z = torch.randn(batch_size, nz, 1, 1, device=device)
+    z = torch.randn(num_images, nz, 1, 1, device=device)
     fake = model(z)
 
     imgio = BytesIO()
