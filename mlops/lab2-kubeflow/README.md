@@ -47,3 +47,43 @@ Flags:
 
 Use "aws-iam-authenticator [command] --help" for more information about a command.
 ```
+
+## Install eksctl
+Command line
+```
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+sudo mv /tmp/eksctl /usr/local/bin
+eksctl -h
+```
+Output
+```
+The official CLI for Amazon EKS
+
+Usage: eksctl [command] [flags]
+
+Commands:
+  eksctl associate                       Associate resources with a cluster
+  eksctl completion                      Generates shell completion scripts for bash, zsh or fish
+  eksctl create                          Create resource(s)
+  eksctl delete                          Delete resource(s)
+  eksctl disassociate                    Disassociate resources from a cluster
+  eksctl drain                           Drain resource(s)
+  eksctl enable                          Enable features in a cluster
+  eksctl generate                        Generate gitops manifests
+  eksctl get                             Get resource(s)
+  eksctl help                            Help about any command
+  eksctl scale                           Scale resources(s)
+  eksctl set                             Set values
+  eksctl unset                           Unset values
+  eksctl update                          Update resource(s)
+  eksctl upgrade                         Upgrade resource(s)
+  eksctl utils                           Various utils
+  eksctl version                         Output the version of eksctl
+
+Common flags:
+  -C, --color string   toggle colorized logs (valid options: true, false, fabulous) (default "true")
+  -h, --help           help for this command
+  -v, --verbose int    set log level, use 0 to silence, 4 for debugging and 5 for debugging with AWS debug logging (default 3)
+
+Use 'eksctl [command] --help' for more information about a command.
+```
