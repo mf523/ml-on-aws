@@ -1,6 +1,31 @@
 # Kubeflow
 
 ## Environment setup
+### Create Role
+* Follow this deep link to [create an IAM role with Administrator access](https://console.aws.amazon.com/iam/home#/roles$new?step=review&commonUseCase=EC2%2BEC2&selectedUseCase=EC2&policies=arn:aws:iam::aws:policy%2FAdministratorAccess).
+* Confirm that AWS service and EC2 are selected, then click Next: Permissions to view permissions.
+* Confirm that AdministratorAccess is checked, then click Next: Tags to assign tags.
+* Take the defaults, and click Next: Review to review.
+* Enter MLOpsWorkshopEKSRole for the Name, and click Create role.
+
+### Set Cloud9
+* Click the grey circle button (in top right corner) and select Manage EC2 Instance.
+* Select the instance, then choose Actions / Security / Modify IAM Role.
+* Choose MLOpsWorkshopEKSRole from the IAM Role drop down, and select Save.
+* Return to your Cloud9 workspace and click the gear icon (in top right corner)
+* Select AWS SETTINGS
+* Turn off AWS managed temporary credentials
+* Close the Preferences tab
+Command line
+```
+rm -vf ${HOME}/.aws/credentials
+aws sts get-caller-identity --query Arn | grep MLOpsWorkshopEKSRole -q && echo "IAM role valid" || echo "IAM role NOT valid"
+```
+Output
+```
+IAM role valid
+```
+
 ### Install kuberctl
 Command line
 ```
@@ -74,6 +99,11 @@ Command line
 ```
 curl --silent --location "https://github.com/kubeflow/kfctl/releases/download/v1.2.0/kfctl_v1.2.0-0-gbc038f9_linux.tar.gz" | tar xz -C /tmp
 sudo install -o root -g root -m 0755 /tmp/kfctl /usr/local/bin/kfctl
+export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws.v1.2.0.yaml"
+#export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws_cognito.v1.2.0.yaml"
+export AWS_CLUSTER_NAME=eksctl-mlops-kf-workshop-cluster
+mkdir ${AWS_CLUSTER_NAME} && cd ${AWS_CLUSTER_NAME}
+wget -O kfctl_aws.yaml $CONFIG_URI
 kfctl -h
 ```
 Output
@@ -88,3 +118,22 @@ Usage:
 
 Use "kfctl [command] --help" for more information about a command.
 ```
+
+### Deploy Kubeflow
+Command line
+```
+kfctl apply -V -f kfctl_aws.yaml
+```
+Output
+```
+A client CLI to create kubeflow applications for specific platforms or 'on-prem' 
+to an existing k8s cluster.
+
+Usage:
+  kfctl [command]
+
+...
+
+Use "kfctl [command] --help" for more information about a command.
+```
+
