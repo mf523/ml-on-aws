@@ -38,7 +38,7 @@ Use "aws-iam-authenticator [command] --help" for more information about a comman
 Command line
 ```
 curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-sudo mv /tmp/eksctl /usr/local/bin
+sudo install -o root -g root -m 0755 /tmp/eksctl /usr/local/bin/eksctl
 eksctl -h
 ```
 Output
@@ -55,7 +55,7 @@ Use 'eksctl [command] --help' for more information about a command.
 
 ## Cluster setup
 ### Create EKS Cluster
-Run this command to create EKS cluster
+Command line
 ```
 eksctl create cluster -f cluster.yaml
 ```
@@ -67,4 +67,24 @@ Output
 2021-02-18 21:57:59 [ℹ]  waiting for CloudFormation stack "eksctl-kfworkshop-cluster"
 ...
 
+```
+
+### Install Kubeflow
+Command line
+```
+curl --silent --location "https://github.com/kubeflow/kfctl/releases/download/v1.2.0/kfctl_v1.2.0-0-gbc038f9_linux.tar.gz" | tar xz -C /tmp
+sudo install -o root -g root -m 0755 /tmp/kfctl /usr/local/bin/kfctl
+kfctl -h
+```
+Output
+```
+A client CLI to create kubeflow applications for specific platforms or 'on-prem' 
+to an existing k8s cluster.
+
+Usage:
+  kfctl [command]
+
+...
+
+Use "kfctl [command] --help" for more information about a command.
 ```
