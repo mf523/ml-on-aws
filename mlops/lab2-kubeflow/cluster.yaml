@@ -1,0 +1,34 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: mlops-kf-workshop
+  region: us-west-2
+  version: '1.18'
+# If your region has multiple availability zones, you can specify 3 of them.
+availabilityZones: ["us-west-2b", "us-west-2c", "us-west-2d"]
+
+# NodeGroup holds all configuration attributes that are specific to a nodegroup
+# You can have several node group in your cluster.
+nodeGroups:
+  - name: cpu-nodegroup
+    instanceType: m5.xlarge
+    desiredCapacity: 2
+    minSize: 0
+    maxSize: 4
+    volumeSize: 50
+    # ssh:
+    #   allow: true
+    #   publicKeyPath: '~/.ssh/id_rsa.pub'
+
+  # Example of GPU node group
+  - name: Tesla-V100
+    instanceType: p3.2xlarge
+    # Make sure the availability zone here is one of cluster availability zones.
+    availabilityZones: ["us-west-2b"]
+    desiredCapacity: 0
+    minSize: 0
+    maxSize: 4
+    volumeSize: 50
+    # ssh:
+    #   allow: true
+    #   publicKeyPath: '~/.ssh/id_rsa.pub'
