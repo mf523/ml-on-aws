@@ -1,6 +1,32 @@
 # Kubeflow
 
-## Install kuberctl
+## Environment setup
+### Create Role
+* Follow this deep link to [create an IAM role with Administrator access](https://console.aws.amazon.com/iam/home#/roles$new?step=review&commonUseCase=EC2%2BEC2&selectedUseCase=EC2&policies=arn:aws:iam::aws:policy%2FAdministratorAccess).
+* Confirm that AWS service and EC2 are selected, then click Next: Permissions to view permissions.
+* Confirm that AdministratorAccess is checked, then click Next: Tags to assign tags.
+* Take the defaults, and click Next: Review to review.
+* Enter MLOpsWorkshopEKSRole for the Name, and click Create role.
+
+### Set Cloud9
+* Click the grey circle button (in top right corner) and select Manage EC2 Instance.
+* Select the instance, then choose Actions / Security / Modify IAM Role.
+* Choose MLOpsWorkshopEKSRole from the IAM Role drop down, and select Save.
+* Return to your Cloud9 workspace and click the gear icon (in top right corner)
+* Select AWS SETTINGS
+* Turn off AWS managed temporary credentials
+* Close the Preferences tab
+Command line
+```
+rm -vf ${HOME}/.aws/credentials
+aws sts get-caller-identity --query Arn | grep MLOpsWorkshopEKSRole -q && echo "IAM role valid" || echo "IAM role NOT valid"
+```
+Output
+```
+IAM role valid
+```
+
+### Install kuberctl
 Command line
 ```
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -12,7 +38,7 @@ Output
 Client Version: version.Info{Major:"1", Minor:"20", GitVersion:"v1.20.4", GitCommit:"e87da0bd6e03ec3fea7933c4b5263d151aafd07c", GitTreeState:"clean", BuildDate:"2021-02-18T16:12:00Z", GoVersion:"go1.15.8", Compiler:"gc", Platform:"linux/amd64"}
 ```
 
-## Install aws-iam-authenticator
+### Install aws-iam-authenticator
 Command line
 ```
 curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator
@@ -28,31 +54,16 @@ A tool to authenticate to Kubernetes using AWS IAM credentials
 Usage:
   aws-iam-authenticator [command]
 
-Available Commands:
-  help        Help about any command
-  init        Pre-generate certificate, private key, and kubeconfig files for the server.
-  server      Run a webhook validation server suitable that validates tokens using AWS IAM
-  token       Authenticate using AWS IAM and get token for Kubernetes
-  verify      Verify a token for debugging purpose
-  version     Version will output the current build information
-
-Flags:
-  -i, --cluster-id ID                 Specify the cluster ID, a unique-per-cluster identifier for your aws-iam-authenticator installation.
-  -c, --config filename               Load configuration from filename
-      --feature-gates mapStringBool   A set of key=value pairs that describe feature gates for alpha/experimental features. Options are:
-                                      AllAlpha=true|false (ALPHA - default=false)
-                                      IAMIdentityMappingCRD=true|false (ALPHA - default=false)
-  -h, --help                          help for aws-iam-authenticator
-  -l, --log-format string             Specify log format to use when logging to stderr [text or json] (default "text")
+...
 
 Use "aws-iam-authenticator [command] --help" for more information about a command.
 ```
 
-## Install eksctl
+### Install eksctl
 Command line
 ```
 curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-sudo mv /tmp/eksctl /usr/local/bin
+sudo install -o root -g root -m 0755 /tmp/eksctl /usr/local/bin/eksctl
 eksctl -h
 ```
 Output
@@ -61,29 +72,68 @@ The official CLI for Amazon EKS
 
 Usage: eksctl [command] [flags]
 
-Commands:
-  eksctl associate                       Associate resources with a cluster
-  eksctl completion                      Generates shell completion scripts for bash, zsh or fish
-  eksctl create                          Create resource(s)
-  eksctl delete                          Delete resource(s)
-  eksctl disassociate                    Disassociate resources from a cluster
-  eksctl drain                           Drain resource(s)
-  eksctl enable                          Enable features in a cluster
-  eksctl generate                        Generate gitops manifests
-  eksctl get                             Get resource(s)
-  eksctl help                            Help about any command
-  eksctl scale                           Scale resources(s)
-  eksctl set                             Set values
-  eksctl unset                           Unset values
-  eksctl update                          Update resource(s)
-  eksctl upgrade                         Upgrade resource(s)
-  eksctl utils                           Various utils
-  eksctl version                         Output the version of eksctl
-
-Common flags:
-  -C, --color string   toggle colorized logs (valid options: true, false, fabulous) (default "true")
-  -h, --help           help for this command
-  -v, --verbose int    set log level, use 0 to silence, 4 for debugging and 5 for debugging with AWS debug logging (default 3)
+...
 
 Use 'eksctl [command] --help' for more information about a command.
 ```
+
+
+## Cluster setup
+### Create EKS Cluster
+Command line
+```
+eksctl create cluster -f cluster.yaml
+```
+Output
+```
+2021-02-18 21:57:25 [ℹ]  eksctl version 0.38.0
+2021-02-18 21:57:25 [ℹ]  using region us-west-2
+...
+2021-02-18 21:57:59 [ℹ]  waiting for CloudFormation stack "eksctl-kfworkshop-cluster"
+...
+
+```
+
+### Install Kubeflow
+Command line
+```
+curl --silent --location "https://github.com/kubeflow/kfctl/releases/download/v1.2.0/kfctl_v1.2.0-0-gbc038f9_linux.tar.gz" | tar xz -C /tmp
+sudo install -o root -g root -m 0755 /tmp/kfctl /usr/local/bin/kfctl
+export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws.v1.2.0.yaml"
+#export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws_cognito.v1.2.0.yaml"
+export AWS_CLUSTER_NAME=eksctl-mlops-kf-workshop-cluster
+mkdir ${AWS_CLUSTER_NAME} && cd ${AWS_CLUSTER_NAME}
+wget -O kfctl_aws.yaml $CONFIG_URI
+kfctl -h
+```
+Output
+```
+A client CLI to create kubeflow applications for specific platforms or 'on-prem' 
+to an existing k8s cluster.
+
+Usage:
+  kfctl [command]
+
+...
+
+Use "kfctl [command] --help" for more information about a command.
+```
+
+### Deploy Kubeflow
+Command line
+```
+kfctl apply -V -f kfctl_aws.yaml
+```
+Output
+```
+A client CLI to create kubeflow applications for specific platforms or 'on-prem' 
+to an existing k8s cluster.
+
+Usage:
+  kfctl [command]
+
+...
+
+Use "kfctl [command] --help" for more information about a command.
+```
+
