@@ -95,6 +95,41 @@ Output
 2021-02-19 00:04:50 [✔]  EKS cluster "mlops-kf-workshop" in "us-west-2" region is ready
 ```
 
+### Import your EKS Console credentials
+Command line
+```
+c9builder=$(aws cloud9 describe-environment-memberships --environment-id=$C9_PID | jq -r '.memberships[].userArn')
+if echo ${c9builder} | grep -q user; then
+    ROLEARN=${c9builder}
+    ROLEARN=${rolearn}
+elif echo ${c9builder} | grep -q assumed-role; then
+    assumedrolename=$(echo ${c9builder} | awk -F/ '{print $(NF-1)}')
+    ROLEARN=$(aws iam get-role --role-name ${assumedrolename} --query Role.Arn --output text) 
+fi
+eksctl create iamidentitymapping --cluster mlops-kf-workshop --arn ${ROLEARN} --group system:masters --username admin
+```
+Oputput
+```
+2021-02-19 13:23:53 [ℹ]  eksctl version 0.38.0
+2021-02-19 13:23:53 [ℹ]  using region us-west-2
+2021-02-19 13:23:54 [ℹ]  adding identity "arn:aws:iam::xxxxxxxx:user/xxxx" to auth ConfigMap
+```
+
+
+### Install Kubernetes Dashboard
+Commend line
+```
+export DASHBOARD_VERSION="v2.0.0"
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/${DASHBOARD_VERSION}/aio/deploy/recommended.yaml
+kubectl proxy --port=8080 --address=0.0.0.0 --disable-filter=true &
+```
+* In your Cloud9 environment, click Tools / Preview / Preview Running Application
+* Scroll to the end of the URL and append: ```/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/```
+```
+aws eks get-token --cluster-name mlops-kf-workshop | jq -r '.status.token'
+```
+
 ### Install Kubeflow
 Command line
 ```
