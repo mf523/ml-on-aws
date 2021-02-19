@@ -89,9 +89,10 @@ Output
 2021-02-18 21:57:25 [ℹ]  eksctl version 0.38.0
 2021-02-18 21:57:25 [ℹ]  using region us-west-2
 ...
-2021-02-18 21:57:59 [ℹ]  waiting for CloudFormation stack "eksctl-kfworkshop-cluster"
+2021-02-18 21:57:59 [ℹ]  waiting for CloudFormation stack "eksctl-mlops-kf-workshop-cluster"
 ...
-
+2021-02-19 00:04:50 [ℹ]  kubectl command should work with "/home/ubuntu/.kube/config", try 'kubectl get nodes'
+2021-02-19 00:04:50 [✔]  EKS cluster "mlops-kf-workshop" in "us-west-2" region is ready
 ```
 
 ### Install Kubeflow
@@ -101,7 +102,7 @@ curl --silent --location "https://github.com/kubeflow/kfctl/releases/download/v1
 sudo install -o root -g root -m 0755 /tmp/kfctl /usr/local/bin/kfctl
 export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws.v1.2.0.yaml"
 #export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws_cognito.v1.2.0.yaml"
-export AWS_CLUSTER_NAME=eksctl-mlops-kf-workshop-cluster
+export AWS_CLUSTER_NAME=mlops-kf-workshop
 mkdir ${AWS_CLUSTER_NAME} && cd ${AWS_CLUSTER_NAME}
 wget -O kfctl_aws.yaml $CONFIG_URI
 kfctl -h
@@ -126,14 +127,9 @@ kfctl apply -V -f kfctl_aws.yaml
 ```
 Output
 ```
-A client CLI to create kubeflow applications for specific platforms or 'on-prem' 
-to an existing k8s cluster.
 
-Usage:
-  kfctl [command]
-
-...
-
-Use "kfctl [command] --help" for more information about a command.
 ```
 
+## References
+* https://www.eksworkshop.com/
+* https://github.com/aws-samples/eks-kubeflow-workshop
