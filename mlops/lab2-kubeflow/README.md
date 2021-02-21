@@ -101,7 +101,6 @@ Command line
 c9builder=$(aws cloud9 describe-environment-memberships --environment-id=$C9_PID | jq -r '.memberships[].userArn')
 if echo ${c9builder} | grep -q user; then
     ROLEARN=${c9builder}
-    ROLEARN=${rolearn}
 elif echo ${c9builder} | grep -q assumed-role; then
     assumedrolename=$(echo ${c9builder} | awk -F/ '{print $(NF-1)}')
     ROLEARN=$(aws iam get-role --role-name ${assumedrolename} --query Role.Arn --output text) 
