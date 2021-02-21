@@ -26,7 +26,7 @@ Output
 IAM role valid
 ```
 
-### Install kuberctl
+### Install kubectl
 Command line
 ```
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -82,10 +82,10 @@ Output
 2021-02-18 21:57:25 [ℹ]  eksctl version 0.38.0
 2021-02-18 21:57:25 [ℹ]  using region us-west-2
 ...
-2021-02-18 21:57:59 [ℹ]  waiting for CloudFormation stack "eksctl-mlops-kubeflow-workshop-cluster"
+2021-02-18 21:57:59 [ℹ]  waiting for CloudFormation stack "eksctl-mlops-workshop-kubeflow-cluster"
 ...
 2021-02-19 00:04:50 [ℹ]  kubectl command should work with "/home/ubuntu/.kube/config", try 'kubectl get nodes'
-2021-02-19 00:04:50 [✔]  EKS cluster "mlops-kubeflow-workshop" in "us-west-2" region is ready
+2021-02-19 00:04:50 [✔]  EKS cluster "mlops-workshop-kubeflow" in "us-west-2" region is ready
 ```
 
 ### Import your EKS Console credentials
@@ -98,13 +98,34 @@ elif echo ${c9builder} | grep -q assumed-role; then
     assumedrolename=$(echo ${c9builder} | awk -F/ '{print $(NF-1)}')
     ROLEARN=$(aws iam get-role --role-name ${assumedrolename} --query Role.Arn --output text) 
 fi
-eksctl create iamidentitymapping --cluster mlops-kubeflow-workshop --arn ${ROLEARN} --group system:masters --username admin
+eksctl create iamidentitymapping --cluster mlops-workshop-kubeflow --arn ${ROLEARN} --group system:masters --username admin
 ```
 Oputput
 ```
 2021-02-19 13:23:53 [ℹ]  eksctl version 0.38.0
 2021-02-19 13:23:53 [ℹ]  using region us-west-2
 2021-02-19 13:23:54 [ℹ]  adding identity "arn:aws:iam::xxxxxxxx:user/xxxx" to auth ConfigMap
+```
+Command line
+```
+kubectl describe configmap -n kube-system aws-auth
+```
+Oputput
+```
+Name:         aws-auth
+Namespace:    kube-system
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+mapUsers:
+----
+- groups:
+  - system:masters
+  userarn: arn:aws:iam::xxxxxxxx:user/xxxx
+  username: admin
+...
 ```
 
 ### Install kfctl
@@ -132,7 +153,7 @@ Command line
 ```
 export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws.v1.2.0.yaml"
 #export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws_cognito.v1.2.0.yaml"
-export AWS_CLUSTER_NAME=mlops-kubeflow-workshop
+export AWS_CLUSTER_NAME=mlops-workshop-kubeflow
 mkdir ${AWS_CLUSTER_NAME} && cd ${AWS_CLUSTER_NAME}
 wget -O kfctl_aws.yaml $CONFIG_URI
 kfctl apply -V -f kfctl_aws.yaml
