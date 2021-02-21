@@ -64,19 +64,12 @@ Command line
 ```
 curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
 sudo install -o root -g root -m 0755 /tmp/eksctl /usr/local/bin/eksctl
-eksctl -h
+eksctl version
 ```
 Output
 ```
-The official CLI for Amazon EKS
-
-Usage: eksctl [command] [flags]
-
-...
-
-Use 'eksctl [command] --help' for more information about a command.
+0.38.0
 ```
-
 
 ## Cluster setup
 ### Create EKS Cluster
