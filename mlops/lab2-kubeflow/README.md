@@ -135,11 +135,6 @@ Command line
 ```
 curl --silent --location "https://github.com/kubeflow/kfctl/releases/download/v1.2.0/kfctl_v1.2.0-0-gbc038f9_linux.tar.gz" | tar xz -C /tmp
 sudo install -o root -g root -m 0755 /tmp/kfctl /usr/local/bin/kfctl
-export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws.v1.2.0.yaml"
-#export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws_cognito.v1.2.0.yaml"
-export AWS_CLUSTER_NAME=mlops-kf-workshop
-mkdir ${AWS_CLUSTER_NAME} && cd ${AWS_CLUSTER_NAME}
-wget -O kfctl_aws.yaml $CONFIG_URI
 kfctl -h
 ```
 Output
@@ -158,11 +153,25 @@ Use "kfctl [command] --help" for more information about a command.
 ### Deploy Kubeflow
 Command line
 ```
+export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws.v1.2.0.yaml"
+#export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws_cognito.v1.2.0.yaml"
+export AWS_CLUSTER_NAME=mlops-kf-workshop
+mkdir ${AWS_CLUSTER_NAME} && cd ${AWS_CLUSTER_NAME}
+wget -O kfctl_aws.yaml $CONFIG_URI
 kfctl apply -V -f kfctl_aws.yaml
+kubectl -n kubeflow get svc
 ```
 Output
 ```
-
+...
+NAME                                           TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
+admission-webhook-service                      ClusterIP   10.100.29.26     <none>        443/TCP             2m41s
+application-controller-service                 ClusterIP   10.100.40.118    <none>        443/TCP             3m39s
+argo-ui                                        NodePort    10.100.158.203   <none>        80:32582/TCP        2m42s
+...
+pytorch-operator                               ClusterIP   10.100.76.250    <none>        8443/TCP            2m41s
+seldon-webhook-service                         ClusterIP   10.100.54.188    <none>        443/TCP             2m41s
+tf-job-operator                                ClusterIP   10.100.160.177   <none>        8443/TCP            2m41s
 ```
 
 ## References
