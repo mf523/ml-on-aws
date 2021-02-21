@@ -130,7 +130,7 @@ kubectl proxy --port=8080 --address=0.0.0.0 --disable-filter=true &
 aws eks get-token --cluster-name mlops-kubeflow-workshop | jq -r '.status.token'
 ```
 
-### Install Kubeflow
+### Install kfctl
 Command line
 ```
 curl --silent --location "https://github.com/kubeflow/kfctl/releases/download/v1.2.0/kfctl_v1.2.0-0-gbc038f9_linux.tar.gz" | tar xz -C /tmp
