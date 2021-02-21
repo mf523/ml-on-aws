@@ -151,9 +151,8 @@ seldon-webhook-service                         ClusterIP   10.100.54.188    <non
 tf-job-operator                                ClusterIP   10.100.160.177   <none>        8443/TCP            2m41s
 ```
 
-
-### Proxy Kubeflow Dashboard
-Commend line
+### Add user to Kubeflow Dashboard
+Command line
 ```
 kubectl edit configmap dex -n auth
 ```
@@ -166,6 +165,9 @@ kubectl edit configmap dex -n auth
 ```
 kubectl rollout restart deployment dex -n auth
 ```
+
+### Proxy Kubeflow Dashboard
+Commend line
 ```
 kubectl port-forward svc/istio-ingressgateway -n istio-system 8080:80
 ```
