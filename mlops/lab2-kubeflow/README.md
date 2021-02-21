@@ -89,9 +89,45 @@ Output
 2021-02-18 21:57:25 [ℹ]  eksctl version 0.38.0
 2021-02-18 21:57:25 [ℹ]  using region us-west-2
 ...
-2021-02-18 21:57:59 [ℹ]  waiting for CloudFormation stack "eksctl-kfworkshop-cluster"
+2021-02-18 21:57:59 [ℹ]  waiting for CloudFormation stack "eksctl-mlops-kf-workshop-cluster"
 ...
+2021-02-19 00:04:50 [ℹ]  kubectl command should work with "/home/ubuntu/.kube/config", try 'kubectl get nodes'
+2021-02-19 00:04:50 [✔]  EKS cluster "mlops-kf-workshop" in "us-west-2" region is ready
+```
 
+### Import your EKS Console credentials
+Command line
+```
+c9builder=$(aws cloud9 describe-environment-memberships --environment-id=$C9_PID | jq -r '.memberships[].userArn')
+if echo ${c9builder} | grep -q user; then
+    ROLEARN=${c9builder}
+    ROLEARN=${rolearn}
+elif echo ${c9builder} | grep -q assumed-role; then
+    assumedrolename=$(echo ${c9builder} | awk -F/ '{print $(NF-1)}')
+    ROLEARN=$(aws iam get-role --role-name ${assumedrolename} --query Role.Arn --output text) 
+fi
+eksctl create iamidentitymapping --cluster mlops-kf-workshop --arn ${ROLEARN} --group system:masters --username admin
+```
+Oputput
+```
+2021-02-19 13:23:53 [ℹ]  eksctl version 0.38.0
+2021-02-19 13:23:53 [ℹ]  using region us-west-2
+2021-02-19 13:23:54 [ℹ]  adding identity "arn:aws:iam::xxxxxxxx:user/xxxx" to auth ConfigMap
+```
+
+
+### Install Kubernetes Dashboard
+Commend line
+```
+export DASHBOARD_VERSION="v2.0.0"
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/${DASHBOARD_VERSION}/aio/deploy/recommended.yaml
+kubectl proxy --port=8080 --address=0.0.0.0 --disable-filter=true &
+```
+* In your Cloud9 environment, click Tools / Preview / Preview Running Application
+* Scroll to the end of the URL and append: ```/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/```
+```
+aws eks get-token --cluster-name mlops-kf-workshop | jq -r '.status.token'
 ```
 
 ### Install Kubeflow
@@ -99,11 +135,6 @@ Command line
 ```
 curl --silent --location "https://github.com/kubeflow/kfctl/releases/download/v1.2.0/kfctl_v1.2.0-0-gbc038f9_linux.tar.gz" | tar xz -C /tmp
 sudo install -o root -g root -m 0755 /tmp/kfctl /usr/local/bin/kfctl
-export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws.v1.2.0.yaml"
-#export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws_cognito.v1.2.0.yaml"
-export AWS_CLUSTER_NAME=eksctl-mlops-kf-workshop-cluster
-mkdir ${AWS_CLUSTER_NAME} && cd ${AWS_CLUSTER_NAME}
-wget -O kfctl_aws.yaml $CONFIG_URI
 kfctl -h
 ```
 Output
@@ -122,18 +153,27 @@ Use "kfctl [command] --help" for more information about a command.
 ### Deploy Kubeflow
 Command line
 ```
+export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws.v1.2.0.yaml"
+#export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws_cognito.v1.2.0.yaml"
+export AWS_CLUSTER_NAME=mlops-kf-workshop
+mkdir ${AWS_CLUSTER_NAME} && cd ${AWS_CLUSTER_NAME}
+wget -O kfctl_aws.yaml $CONFIG_URI
 kfctl apply -V -f kfctl_aws.yaml
+kubectl -n kubeflow get svc
 ```
 Output
 ```
-A client CLI to create kubeflow applications for specific platforms or 'on-prem' 
-to an existing k8s cluster.
-
-Usage:
-  kfctl [command]
-
 ...
-
-Use "kfctl [command] --help" for more information about a command.
+NAME                                           TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
+admission-webhook-service                      ClusterIP   10.100.29.26     <none>        443/TCP             2m41s
+application-controller-service                 ClusterIP   10.100.40.118    <none>        443/TCP             3m39s
+argo-ui                                        NodePort    10.100.158.203   <none>        80:32582/TCP        2m42s
+...
+pytorch-operator                               ClusterIP   10.100.76.250    <none>        8443/TCP            2m41s
+seldon-webhook-service                         ClusterIP   10.100.54.188    <none>        443/TCP             2m41s
+tf-job-operator                                ClusterIP   10.100.160.177   <none>        8443/TCP            2m41s
 ```
 
+## References
+* https://www.eksworkshop.com/
+* https://github.com/aws-samples/eks-kubeflow-workshop
