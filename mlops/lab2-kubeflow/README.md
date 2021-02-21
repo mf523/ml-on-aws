@@ -114,21 +114,6 @@ Oputput
 2021-02-19 13:23:54 [ℹ]  adding identity "arn:aws:iam::xxxxxxxx:user/xxxx" to auth ConfigMap
 ```
 
-
-### Install Kubernetes Dashboard
-Commend line
-```
-export DASHBOARD_VERSION="v2.0.0"
-
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/${DASHBOARD_VERSION}/aio/deploy/recommended.yaml
-kubectl proxy --port=8080 --address=0.0.0.0 --disable-filter=true &
-```
-* In your Cloud9 environment, click Tools / Preview / Preview Running Application
-* Scroll to the end of the URL and append: ```/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/```
-```
-aws eks get-token --cluster-name mlops-kubeflow-workshop | jq -r '.status.token'
-```
-
 ### Install kfctl
 Command line
 ```
@@ -172,6 +157,27 @@ pytorch-operator                               ClusterIP   10.100.76.250    <non
 seldon-webhook-service                         ClusterIP   10.100.54.188    <none>        443/TCP             2m41s
 tf-job-operator                                ClusterIP   10.100.160.177   <none>        8443/TCP            2m41s
 ```
+
+
+### Proxy Kubeflow Dashboard
+Commend line
+```
+kubectl edit configmap dex -n auth
+```
+```
+- email: test@kubeflow.org
+  hash: $2b$10$ow6fWbPojHUg56hInYmYXe.B7u3frcSR.kuUkQp2EzXs5t0xfMRtS
+  username: test
+  userID: 08a8684b-db88-4b73-90a9-3cd1661f5466
+```
+```
+kubectl rollout restart deployment dex -n auth
+```
+```
+kubectl port-forward svc/istio-ingressgateway -n istio-system 8080:80
+```
+* In your Cloud9 environment, click Tools / Preview / Preview Running Application
+
 
 ## References
 * https://www.eksworkshop.com/
