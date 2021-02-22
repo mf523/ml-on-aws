@@ -1,7 +1,7 @@
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
-  name: mlops-kubeflow-workshop
+  name: mlops-workshop-kubeflow
   region: us-west-2
   version: '1.19'
 # If your region has multiple availability zones, you can specify 3 of them.
@@ -11,7 +11,7 @@ availabilityZones: ["us-west-2b", "us-west-2c", "us-west-2d"]
 # You can have several node group in your cluster.
 nodeGroups:
   - name: cpu-nodegroup-m5
-    instanceType: m5.xlarge
+    instanceType: m5.2xlarge
     desiredCapacity: 2
     minSize: 0
     maxSize: 4
@@ -21,14 +21,14 @@ nodeGroups:
     #   publicKeyPath: '~/.ssh/id_rsa.pub'
 
   # Example of GPU node group
-  - name: gpu-nodegroup-p3
-    instanceType: p3.2xlarge
-    # Make sure the availability zone here is one of cluster availability zones.
-    availabilityZones: ["us-west-2b"]
-    desiredCapacity: 0
-    minSize: 0
-    maxSize: 4
-    volumeSize: 50
+  #- name: gpu-nodegroup-p3
+  #  instanceType: p3.2xlarge
+  #  # Make sure the availability zone here is one of cluster availability zones.
+  #  availabilityZones: ["us-west-2b"]
+  #  desiredCapacity: 0
+  #  minSize: 0
+  #  maxSize: 4
+  #  volumeSize: 50
     # ssh:
     #   allow: true
     #   publicKeyPath: '~/.ssh/id_rsa.pub'
