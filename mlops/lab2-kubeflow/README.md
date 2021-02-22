@@ -26,6 +26,12 @@ Output
 IAM role valid
 ```
 
+### Upgrade the AWSCLI tool
+Command line
+```
+pip3 install awscli -q --upgrade --user
+```
+
 ### Install kubectl
 Command line
 ```
