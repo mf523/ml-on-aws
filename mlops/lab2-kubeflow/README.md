@@ -87,6 +87,10 @@ Output
 2021-02-19 00:04:50 [ℹ]  kubectl command should work with "/home/ubuntu/.kube/config", try 'kubectl get nodes'
 2021-02-19 00:04:50 [✔]  EKS cluster "mlops-workshop-kubeflow" in "us-west-2" region is ready
 ```
+Error
+```
+The maximum number of VPCs has been reached.
+```
 
 ### Import your EKS Console credentials
 Command line
