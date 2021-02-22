@@ -30,6 +30,11 @@ IAM role valid
 Command line
 ```
 pip3 install awscli -q --upgrade --user
+aws --version
+```
+Output
+```
+aws-cli/1.19.13 Python/3.6.9 Linux/5.4.0-1037-aws botocore/1.20.13
 ```
 
 ### Install kubectl
