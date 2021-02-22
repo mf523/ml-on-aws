@@ -26,7 +26,7 @@ Output
 IAM role valid
 ```
 
-### Install kuberctl
+### Install kubectl
 Command line
 ```
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -64,19 +64,12 @@ Command line
 ```
 curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
 sudo install -o root -g root -m 0755 /tmp/eksctl /usr/local/bin/eksctl
-eksctl -h
+eksctl version
 ```
 Output
 ```
-The official CLI for Amazon EKS
-
-Usage: eksctl [command] [flags]
-
-...
-
-Use 'eksctl [command] --help' for more information about a command.
+0.38.0
 ```
-
 
 ## Cluster setup
 ### Create EKS Cluster
@@ -89,10 +82,10 @@ Output
 2021-02-18 21:57:25 [ℹ]  eksctl version 0.38.0
 2021-02-18 21:57:25 [ℹ]  using region us-west-2
 ...
-2021-02-18 21:57:59 [ℹ]  waiting for CloudFormation stack "eksctl-mlops-kf-workshop-cluster"
+2021-02-18 21:57:59 [ℹ]  waiting for CloudFormation stack "eksctl-mlops-workshop-kubeflow-cluster"
 ...
 2021-02-19 00:04:50 [ℹ]  kubectl command should work with "/home/ubuntu/.kube/config", try 'kubectl get nodes'
-2021-02-19 00:04:50 [✔]  EKS cluster "mlops-kf-workshop" in "us-west-2" region is ready
+2021-02-19 00:04:50 [✔]  EKS cluster "mlops-workshop-kubeflow" in "us-west-2" region is ready
 ```
 
 ### Import your EKS Console credentials
@@ -101,12 +94,11 @@ Command line
 c9builder=$(aws cloud9 describe-environment-memberships --environment-id=$C9_PID | jq -r '.memberships[].userArn')
 if echo ${c9builder} | grep -q user; then
     ROLEARN=${c9builder}
-    ROLEARN=${rolearn}
 elif echo ${c9builder} | grep -q assumed-role; then
     assumedrolename=$(echo ${c9builder} | awk -F/ '{print $(NF-1)}')
     ROLEARN=$(aws iam get-role --role-name ${assumedrolename} --query Role.Arn --output text) 
 fi
-eksctl create iamidentitymapping --cluster mlops-kf-workshop --arn ${ROLEARN} --group system:masters --username admin
+eksctl create iamidentitymapping --cluster mlops-workshop-kubeflow --arn ${ROLEARN} --group system:masters --username admin
 ```
 Oputput
 ```
@@ -114,23 +106,29 @@ Oputput
 2021-02-19 13:23:53 [ℹ]  using region us-west-2
 2021-02-19 13:23:54 [ℹ]  adding identity "arn:aws:iam::xxxxxxxx:user/xxxx" to auth ConfigMap
 ```
-
-
-### Install Kubernetes Dashboard
-Commend line
+Command line
 ```
-export DASHBOARD_VERSION="v2.0.0"
+kubectl describe configmap -n kube-system aws-auth
+```
+Oputput
+```
+Name:         aws-auth
+Namespace:    kube-system
+Labels:       <none>
+Annotations:  <none>
 
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/${DASHBOARD_VERSION}/aio/deploy/recommended.yaml
-kubectl proxy --port=8080 --address=0.0.0.0 --disable-filter=true &
-```
-* In your Cloud9 environment, click Tools / Preview / Preview Running Application
-* Scroll to the end of the URL and append: ```/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/```
-```
-aws eks get-token --cluster-name mlops-kf-workshop | jq -r '.status.token'
+Data
+====
+mapUsers:
+----
+- groups:
+  - system:masters
+  userarn: arn:aws:iam::xxxxxxxx:user/xxxx
+  username: admin
+...
 ```
 
-### Install Kubeflow
+### Install kfctl
 Command line
 ```
 curl --silent --location "https://github.com/kubeflow/kfctl/releases/download/v1.2.0/kfctl_v1.2.0-0-gbc038f9_linux.tar.gz" | tar xz -C /tmp
@@ -155,7 +153,7 @@ Command line
 ```
 export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws.v1.2.0.yaml"
 #export CONFIG_URI="https://raw.githubusercontent.com/kubeflow/manifests/v1.2-branch/kfdef/kfctl_aws_cognito.v1.2.0.yaml"
-export AWS_CLUSTER_NAME=mlops-kf-workshop
+export AWS_CLUSTER_NAME=mlops-workshop-kubeflow
 mkdir ${AWS_CLUSTER_NAME} && cd ${AWS_CLUSTER_NAME}
 wget -O kfctl_aws.yaml $CONFIG_URI
 kfctl apply -V -f kfctl_aws.yaml
@@ -174,6 +172,35 @@ seldon-webhook-service                         ClusterIP   10.100.54.188    <non
 tf-job-operator                                ClusterIP   10.100.160.177   <none>        8443/TCP            2m41s
 ```
 
+### Add user to Kubeflow Dashboard
+Command line
+```
+kubectl edit configmap dex -n auth
+```
+```
+- email: test@kubeflow.org
+  hash: $2b$10$ow6fWbPojHUg56hInYmYXe.B7u3frcSR.kuUkQp2EzXs5t0xfMRtS
+  username: test
+  userID: 08a8684b-db88-4b73-90a9-3cd1661f5466
+```
+```
+kubectl rollout restart deployment dex -n auth
+```
+
+### Proxy Kubeflow Dashboard
+Commend line
+```
+kubectl port-forward svc/istio-ingressgateway -n istio-system 8080:80
+```
+* In your Cloud9 environment, click Tools / Preview / Preview Running Application
+
+
 ## References
+* https://www.kubeflow.org/docs/aws/
+* https://github.com/kubeflow/pipelines/tree/master/components/aws
 * https://www.eksworkshop.com/
+* https://www.getstartedonsagemaker.com/workshop-k8s-pipeline/
 * https://github.com/aws-samples/eks-kubeflow-workshop
+* https://github.com/data-science-on-aws/workshop
+* https://github.com/aws-samples/eks-kubeflow-cloudformation-quick-start
+
