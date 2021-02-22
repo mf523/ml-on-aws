@@ -196,6 +196,8 @@ kubectl port-forward svc/istio-ingressgateway -n istio-system 8080:80
 
 
 ## References
+* https://www.kubeflow.org/docs/aws/
 * https://www.eksworkshop.com/
 * https://github.com/aws-samples/eks-kubeflow-workshop
 * https://github.com/data-science-on-aws/workshop
+* https://github.com/aws-samples/eks-kubeflow-cloudformation-quick-start
