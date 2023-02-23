@@ -1,4 +1,4 @@
-FROM lmiao/dev-env:ubuntu-base
+FROM ubuntu:lunar
 
 RUN apt-get -y dist-upgrade && \
     apt-get -y update
