@@ -1,9 +1,8 @@
 # open system terminal
 
-yum install wget
-wget https://bootstrap.pypa.io/get-pip.py
-# python get-pip.py
+```bash
 pip install -U awscli sagemaker-studio-image-build
+```
 
 Ensure the execution role has a trust policy with CodeBuild.
 ```json
