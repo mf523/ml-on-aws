@@ -139,5 +139,5 @@ The following permissions are required in the execution role to execute a build 
 ```bash
 git clone git@github.com:mf523/ml-on-aws.git ml-on-aws.git
 cd ml-on-aws.git/custom-image/
-sm-docker build -t lmiao/dev-env:ubuntu - < Dockerfile.ubuntu
+sm-docker build . --repository lmiao/dev-env:ubuntu --file Dockerfile.ubuntu
 ```
