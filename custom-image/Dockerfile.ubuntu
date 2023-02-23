@@ -57,6 +57,12 @@ COPY environment.yml .
 # RUN /opt/conda/bin/conda env update -f environment.yml --prune && \
 #     rm -rf environment.yml
 
+RUN conda create --name py310 python=3.10 && \
+    source activate py310 && \
+    conda install pip && \
+    conda install ipykernel # or pip install ipykernel && \
+    python -m ipykernel install --user --name py310 --display-name "Python 3.10 (Ubuntu)"
+
 
 #############################################################################
 #                             FINAL IMAGE                                   #
@@ -75,9 +81,9 @@ RUN apt-get update && \
         # for glog
         libgoogle-glog-dev libgoogle-glog0v5 \
         # python sox
-        sox libsox-dev python3-dev python3-pip python3-distutils && \
+        # sox libsox-dev python3-dev python3-pip python3-distutils && \
         # python (for bindings and preprocessing)
-        python3 -m pip --no-cache-dir install --upgrade setuptools numpy sox tqdm ipython && \
+        # python3 -m pip --no-cache-dir install --upgrade setuptools numpy sox tqdm ipython && \
 # ==================================================================
 # clean up everything
 # ------------------------------------------------------------------
