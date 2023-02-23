@@ -3,9 +3,9 @@ FROM public.ecr.aws/lts/ubuntu:latest
 RUN apt-get -y dist-upgrade && \
     apt-get -y update
 
-RUN apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get -y install apt-utils git gcc g++ cmake
+RUN apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get -y install apt-utils git gcc g++ cmake make build-essential
 
-RUN apt-get -y update && apt-get -y install libboost-all-dev libjsoncpp-dev uuid-dev openssl libssl-dev zlib1g-dev
+RUN apt-get -y update && apt-get -y install libboost-all-dev libjsoncpp-dev uuid-dev openssl libssl-dev zlib1g-dev ncurses-dev
 
 #############################################################################
 #                             APT IMAGE + CMAKE                             #
