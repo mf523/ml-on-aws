@@ -5,6 +5,6 @@ channels:
 dependencies:
   - python
   - numpy
-  - awscli
+#  - awscli
   - boto3
   - ipykernel
