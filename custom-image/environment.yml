@@ -1,11 +1,13 @@
 name: py310
 channels:
+  - anaconda
 #  - conda-forge
   - defaults
 dependencies:
   - python=3.10
   - numpy
   - ipykernel
+  - pip
   - pip:
     - awscli
     - boto3
