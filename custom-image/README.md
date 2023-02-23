@@ -131,6 +131,52 @@ The following permissions are required in the execution role to execute a build 
                     "iam:PassedToService": "codebuild.amazonaws.com"
                 }
             }
+        },
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:PutImageTagMutability",
+                "ecr:StartImageScan",
+                "ecr:DescribeImageReplicationStatus",
+                "ecr:ListTagsForResource",
+                "ecr:UploadLayerPart",
+                "ecr:BatchDeleteImage",
+                "ecr:CreatePullThroughCacheRule",
+                "ecr:ListImages",
+                "ecr:BatchGetRepositoryScanningConfiguration",
+                "ecr:DeleteRepository",
+                "ecr:GetRegistryScanningConfiguration",
+                "ecr:CompleteLayerUpload",
+                "ecr:TagResource",
+                "ecr:DescribeRepositories",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:ReplicateImage",
+                "ecr:GetLifecyclePolicy",
+                "ecr:GetRegistryPolicy",
+                "ecr:PutLifecyclePolicy",
+                "ecr:DescribeImageScanFindings",
+                "ecr:GetLifecyclePolicyPreview",
+                "ecr:CreateRepository",
+                "ecr:DescribeRegistry",
+                "ecr:PutImageScanningConfiguration",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:DescribePullThroughCacheRules",
+                "ecr:GetAuthorizationToken",
+                "ecr:PutRegistryScanningConfiguration",
+                "ecr:DeletePullThroughCacheRule",
+                "ecr:DeleteLifecyclePolicy",
+                "ecr:PutImage",
+                "ecr:BatchImportUpstreamImage",
+                "ecr:UntagResource",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:StartLifecyclePolicyPreview",
+                "ecr:InitiateLayerUpload",
+                "ecr:GetRepositoryPolicy",
+                "ecr:PutReplicationConfiguration"
+            ],
+            "Resource": "*"
         }
     ]
 }
