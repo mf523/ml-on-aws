@@ -50,7 +50,8 @@ RUN apt-get update && \
 
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
     bash ~/miniconda.sh -b -p /opt/conda && \
-    /opt/conda/bin/conda update conda
+    /opt/conda/bin/conda update -y conda && \
+    rm -rf ~/miniconda.sh
 
 # USER docker
 CMD /bin/bash
