@@ -2,7 +2,7 @@ name: py310
 channels:
   - conda-forge
 dependencies:
-  - python=3.10
+  - python
   - numpy
   - awscli
   - boto3
