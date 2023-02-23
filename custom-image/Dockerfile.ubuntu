@@ -51,6 +51,7 @@ RUN apt-get -y update && DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         emacs \
         nano \
         htop \
+        unzip \
         # libsndfile
         libsndfile1-dev \
         # gflags
