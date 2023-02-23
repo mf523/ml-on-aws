@@ -52,18 +52,18 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
     bash ~/miniconda.sh -b -p /opt/conda && \
     /opt/conda/bin/conda update -y conda && \
     rm -rf ~/miniconda.sh
-    
+
+# Create the environment:
 COPY environment.yml .
-# RUN /opt/conda/bin/conda env update -f environment.yml --prune && \
-#     rm -rf environment.yml
+RUN /opt/conda/bin/conda env create -f environment.yml
 
 # /bin/sh: 1: source: not found
-RUN . /opt/conda/etc/profile.d/conda.sh && \
-    /opt/conda/bin/conda init bash && \
-    /opt/conda/bin/conda create --name py310 python=3.10 && \
-    /opt/conda/bin/conda activate py310 && \
-    /opt/conda/bin/conda install pip && \
-    /opt/conda/bin/conda install ipykernel # or pip install ipykernel && \
+# Make RUN commands use the new environment:
+SHELL ["/opt/conda/bin/conda", "run", "-n", "py310", "/bin/bash", "-c", " --prune"]
+RUN rm -rf environment.yml
+
+RUN /opt/conda/bin/conda install -n py310 pip && \
+    /opt/conda/bin/conda install -n py310 ipykernel # or pip install ipykernel && \
     python -m ipykernel install --user --name py310 --display-name "Python 3.10 (Ubuntu)"
 
 
