@@ -47,29 +47,7 @@ RUN apt-get update && \
     apt-get clean && \
     apt-get -y autoremove && \
     rm -rf /var/lib/apt/lists/*
-
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
-    bash ~/miniconda.sh -b -p /opt/conda && \
-    /opt/conda/bin/conda update -y conda && \
-    rm -rf ~/miniconda.sh
-
-# Create the environment:
-COPY environment.yml .
-RUN /opt/conda/bin/conda env create -f environment.yml
-
-# /bin/sh: 1: source: not found
-# Make RUN commands use the new environment:
-SHELL ["/opt/conda/bin/conda", "run", "-n", "py310", "/bin/bash", "-c"]
-
-RUN /opt/conda/bin/conda install -n py310 pip && \
-    /opt/conda/bin/conda install -n py310 ipykernel # or pip install ipykernel && \
-    rm -rf environment.yml && \
-    python -m ipykernel install --user --name py310 --display-name "Python 3.10 (Ubuntu)"
-
-
-#############################################################################
-#                             FINAL IMAGE                                   #
-#############################################################################
+    
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
@@ -93,6 +71,30 @@ RUN apt-get update && \
     apt-get clean && \
     apt-get -y autoremove && \
     rm -rf /var/lib/apt/lists/*
+
+
+#############################################################################
+#                             FINAL IMAGE                                   #
+#############################################################################
+
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
+    bash ~/miniconda.sh -b -p /opt/conda && \
+    /opt/conda/bin/conda update -y conda && \
+    rm -rf ~/miniconda.sh
+
+
+# Create the environment:
+COPY environment.yml .
+RUN /opt/conda/bin/conda env create -f environment.yml
+
+# /bin/sh: 1: source: not found
+# Make RUN commands use the new environment:
+SHELL ["/opt/conda/bin/conda", "run", "-n", "py310", "/bin/bash", "-c"]
+
+RUN /opt/conda/bin/conda install -n py310 pip && \
+    /opt/conda/bin/conda install -n py310 ipykernel # or pip install ipykernel && \
+    rm -rf environment.yml && \
+    python -m ipykernel install --user --name py310 --display-name "Python 3.10 (Ubuntu)"
 
 
 # USER docker
