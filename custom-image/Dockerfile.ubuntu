@@ -1,4 +1,4 @@
-FROM ubuntu:lunar
+FROM public.ecr.aws/lts/ubuntu:latest
 
 RUN apt-get -y dist-upgrade && \
     apt-get -y update
