@@ -1,5 +1,7 @@
 FROM public.ecr.aws/lts/ubuntu:latest
 
+SHELL ["/bin/bash", "-c"]
+
 RUN apt-get -y dist-upgrade && \
     apt-get -y update
 
