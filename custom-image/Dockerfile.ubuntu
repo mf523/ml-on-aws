@@ -54,7 +54,7 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
     rm -rf ~/miniconda.sh
     
 COPY environment.yml .
-RUN /opt/conda/bin/conda env update -y -f environment.yml --prune && \
+RUN /opt/conda/bin/conda env update -f environment.yml --prune && \
     rm -rf environment.yml
 
 
