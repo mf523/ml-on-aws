@@ -57,7 +57,8 @@ COPY environment.yml .
 # RUN /opt/conda/bin/conda env update -f environment.yml --prune && \
 #     rm -rf environment.yml
 
-RUN /opt/conda/bin/conda create --name py310 python=3.10 && \
+RUN source /opt/conda/etc/profile.d/conda.sh && \
+    /opt/conda/bin/conda create --name py310 python=3.10 && \
     /opt/conda/bin/conda activate py310 && \
     /opt/conda/bin/conda install pip && \
     /opt/conda/bin/conda install ipykernel # or pip install ipykernel && \
