@@ -1,6 +1,7 @@
 name: py310
 channels:
-  - conda-forge
+#  - conda-forge
+  - defaults
 dependencies:
   - python
   - numpy
