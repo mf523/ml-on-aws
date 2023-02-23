@@ -60,6 +60,7 @@ COPY environment.yml .
 # /bin/sh: 1: source: not found
 SHELL ["/bin/bash", "-c"]
 RUN source /opt/conda/etc/profile.d/conda.sh && \
+    /opt/conda/bin/conda init bash && \
     /opt/conda/bin/conda create --name py310 python=3.10 && \
     /opt/conda/bin/conda activate py310 && \
     /opt/conda/bin/conda install pip && \
