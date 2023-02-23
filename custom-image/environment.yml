@@ -1,0 +1,9 @@
+name: base
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - numpy
+  - awscli
+  - boto3
+  - ipykernel
