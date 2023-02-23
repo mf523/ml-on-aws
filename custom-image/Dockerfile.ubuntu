@@ -3,7 +3,7 @@ FROM public.ecr.aws/lts/ubuntu:latest
 RUN apt-get -y dist-upgrade && \
     apt-get -y update
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install git gcc g++ cmake
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install apt-utils git gcc g++ cmake
 
 RUN apt-get -y install libboost-all-dev libjsoncpp-dev uuid-dev openssl libssl-dev zlib1g-dev
 
@@ -52,6 +52,10 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
     bash ~/miniconda.sh -b -p /opt/conda && \
     /opt/conda/bin/conda update -y conda && \
     rm -rf ~/miniconda.sh
+    
+COPY environment.yml .
+RUN /opt/conda/bin/conda env update -f environment.yml --prune
+
 
 # USER docker
 CMD /bin/bash
