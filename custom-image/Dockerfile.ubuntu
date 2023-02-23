@@ -41,8 +41,6 @@ RUN apt-get update && \
         libopenmpi-dev openmpi-bin \
         # for kenlm
         zlib1g-dev libbz2-dev liblzma-dev && \
-        # python 3
-        python3 python3-pip && \
 # ==================================================================
 # clean up everything
 # ------------------------------------------------------------------
@@ -50,6 +48,9 @@ RUN apt-get update && \
     apt-get -y autoremove && \
     rm -rf /var/lib/apt/lists/*
 
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
+    bash ~/miniconda.sh -b -p /opt/conda && \
+    /opt/conda/bin/conda update conda
 
 # USER docker
 CMD /bin/bash
