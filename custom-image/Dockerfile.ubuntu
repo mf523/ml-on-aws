@@ -59,11 +59,11 @@ RUN /opt/conda/bin/conda env create -f environment.yml
 
 # /bin/sh: 1: source: not found
 # Make RUN commands use the new environment:
-SHELL ["/opt/conda/bin/conda", "run", "-n", "py310", "/bin/bash", "-c", " --prune"]
-RUN rm -rf environment.yml
+SHELL ["/opt/conda/bin/conda", "run", "-n", "py310", "/bin/bash", "-c"]
 
 RUN /opt/conda/bin/conda install -n py310 pip && \
     /opt/conda/bin/conda install -n py310 ipykernel # or pip install ipykernel && \
+    rm -rf environment.yml && \
     python -m ipykernel install --user --name py310 --display-name "Python 3.10 (Ubuntu)"
 
 
